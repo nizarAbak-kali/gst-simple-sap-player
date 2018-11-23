@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
+from rcv_mc_from import SapReceiver, SdpModel
+from gi.repository import Gst, GObject, Gtk
 import os
 import time
 
 import gi
 gi.require_version('Gst', '1.0')
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gst, GObject, Gtk
-from  rcv_mc_from import SapReceiver, SdpModel
+
 
 class GTK_Main(object):
 
     def __init__(self):
-        #SAP PART
+        # SAP PART
         self.session_name_changed = False
         self.sap_rcv = SapReceiver()
 
@@ -39,7 +40,7 @@ class GTK_Main(object):
         name_list = list(self.sap_rcv.sdp_dict.keys())
 
         print(name_list)
-        self.current_session_name = name_list [0]
+        self.current_session_name = name_list[0]
 
         name_combo = Gtk.ComboBoxText()
         name_combo.set_entry_text_column(0)
@@ -60,7 +61,6 @@ class GTK_Main(object):
         self.label.set_line_wrap(True)
         vbox.pack_start(self.label, False, False, 0)
 
-
         self.movie_window = Gtk.DrawingArea()
         vbox.add(self.movie_window)
         window.show_all()
@@ -72,7 +72,6 @@ class GTK_Main(object):
         bus.enable_sync_message_emission()
         bus.connect("message", self.on_message)
 
-
     def on_name_combo_changed(self, combo):
         text = combo.get_active_text()
         print("selected : ", text)
@@ -82,17 +81,15 @@ class GTK_Main(object):
     def start_pipeline(self):
         sdp = self.sap_rcv.sdp_dict[self.current_session_name]
         self.label.set_text(str(sdp))
-        gst_command='udpsrc'+\
-                    ' address='+sdp.ip+ \
-                    ' port='+str(sdp.port)+\
-                    ' multicast-iface=eth0'+ \
-                    ' caps="'+ sdp.get_caps_from_sdp()+'" '
+        gst_command = 'udpsrc' +\
+            ' address='+sdp.ip + \
+            ' port='+str(sdp.port) +\
+            ' multicast-iface=eth0' + \
+            ' caps="' + sdp.get_caps_from_sdp()+'" '
 
-
-
-        if sdp.encoding_type  == "RAW":
+        if sdp.encoding_type == "RAW":
             gst_command += " ! rtpvrawdepay ! glimagesink sync = false"
-        else :
+        else:
             gst_command += " ! rtph264depay ! h264parse ! avdec_h264 ! glimagesink sync = false"
         self.pipeline = Gst.parse_launch(gst_command)
         self.pipeline.set_state(Gst.State.PLAYING)
@@ -115,7 +112,6 @@ class GTK_Main(object):
             err, debug = message.parse_error()
             print("Error: %s" % err, debug)
             self.pipeline.set_state(Gst.State.NULL)
-
 
 
 Gst.init(None)
